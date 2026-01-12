@@ -1,4 +1,5 @@
 from services.openai_client import get_openai_client
+from services.naver_local_search import search_restaurants
 
 SYSTEM_PROMPT = """
 Role (페르소나):
@@ -46,24 +47,75 @@ Task (지시 사항):
 모호할 경우 체인점 또는 널리 알려진 상호를 우선하라.
 """
 
-def recommend_restaurant(
-    info: str,
-    model: str = "gpt-4.1-mini",
-    temperature: float = 1.0,
-    top_p: float = 1.0,
-    max_tokens: int = 2048,
-) -> str:
+# def recommend_restaurant(
+#     info: str,
+#     model: str = "gpt-4.1-mini",
+#     temperature: float = 1.0,
+#     top_p: float = 1.0,
+#     max_tokens: int = 2048,
+# ) -> str:
+#     client = get_openai_client()
+
+#     response = client.chat.completions.create(
+#         model=model,
+#         messages=[
+#             {"role": "system", "content": SYSTEM_PROMPT},
+#             {"role": "user", "content": f"성별/만남 장소/동성자 성별 : {info}"}
+#         ],
+#         temperature=temperature,
+#         top_p=top_p,
+#         max_completion_tokens=max_tokens,
+#     )
+
+#     return response.choices[0].message.content
+
+# from services.openai_client import get_openai_client
+
+
+def recommend_restaurant(prompt: str):
     client = get_openai_client()
 
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"성별/만남 장소/동성자 성별 : {info}"}
+    response = client.responses.create(
+        model="gpt-4.1-mini",
+        input=[
+            {
+                "role": "system",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": SYSTEM_PROMPT
+                    }
+                ]
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": prompt
+                    }
+                ]
+            }
         ],
-        temperature=temperature,
-        top_p=top_p,
-        max_completion_tokens=max_tokens,
+        tools=search_restaurants(),
+        max_output_tokens=2048
     )
 
-    return response.choices[0].message.content
+    return response.output_text
+
+
+# from services.openai_client import get_openai_client
+# from services.web_search_config import WEB_SEARCH_TOOL
+
+# def recommend_restaurant(prompt):
+#     client = get_openai_client()
+
+#     response = client.responses.create(
+#         model="gpt-4.1-mini",
+
+#         input=prompt,
+#         tools=WEB_SEARCH_TOOL,
+#         max_output_tokens=2048
+#     )
+#     return response.output_text
+
